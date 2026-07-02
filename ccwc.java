@@ -5,10 +5,9 @@ import java.io.InputStreamReader;
 
 public class ccwc {
 
-    public static String arg;
+    public static String arg = "-a";
     public static String file = "";
-    public static String content = "";
-    public static String sep = "  ";
+    public static int BUFFER_SIZE = 64 * 1024;
     public static int l = 0;
     public static int c = 0;
     public static int m = 0;
@@ -16,91 +15,49 @@ public class ccwc {
 
     public static void main(String[] args) {
 
-        if (System.console() == null) {
-
-            arg = (args.length == 1) ? args[0] : "-a";
-
-            try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(System.in), 64 * 1024);
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    l++;
-                    c += line.getBytes().length;
-                    m += line.length() + 1;
-                    w += line.trim().split("\\s+").length;
-                    content += line;
+        if (args.length > 0) {
+            if (args[0].startsWith("-")) {
+                arg = args[0];
+                if (args.length > 1) {
+                    file = args[1];
                 }
-                reader.close();
-            } catch (IOException e) {
-                showHelp();
-                return;
+            } else {
+                file = args[0];
             }
-
         }
 
-        else {
-
-            switch (args.length) {
-
-                case 1:
-                    arg = "-a";
-                    file = args[0];
-                    break;
-
-                case 2:
-                    arg = args[0];
-                    file = args[1];
-                    break;
-
-                default:
-                    showHelp();
-                    return;
-
+        try (BufferedReader reader = (file.equals(""))
+                ? new BufferedReader(new InputStreamReader(System.in), BUFFER_SIZE)
+                : new BufferedReader(new FileReader(file), BUFFER_SIZE);) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                l++;
+                c += line.getBytes().length + 2; // +2 because the readLine trims the trailing \n
+                m += line.length() + 2;
+                w += line.trim().split("\\s+").length;
             }
-
-            // try {
-            // BufferedReader reader = new BufferedReader(new FileReader(file));
-            // while (reader.ready()) {
-            // content += (char) reader.read();
-            // }
-            // reader.close();
-            // } catch (IOException e) {
-            // System.out.println("File not found!");
-            // return;
-            // }
-
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(file), 64 * 1024);
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    l++;
-                    c += line.getBytes().length + 1;
-                    m += line.length() + 1;
-                    w += line.trim().split("\\s+").length;
-                }
-                reader.close();
-            } catch (IOException e) {
-                showHelp();
-                return;
-            }
-
+            reader.close();
+        } catch (IOException e) {
+            System.out.println("File not found!");
+            showHelp();
+            return;
         }
 
         switch (arg) {
             case "-c":
-                fPrint(file, getBytes());
+                fPrint(file, c);
                 break;
             case "-l":
-                fPrint(file, getLines());
+                fPrint(file, l);
                 break;
             case "-w":
-                fPrint(file, getWords());
+                fPrint(file, w);
                 break;
             case "-m":
                 fPrint(file, m);
                 break;
             case "-a":
-                fPrint(file, getLines(), getWords(), getBytes());
+                fPrint(file, l, w, c);
                 break;
             default:
                 showHelp();
@@ -110,39 +67,20 @@ public class ccwc {
     }
 
     public static void showHelp() {
-        System.out.println("HELP");
+        System.out.println("usage: ccwc [flags] [file]");
+        System.out.println("flags:");
+        System.out.println("\t-l: Line count");
+        System.out.println("\t-c: Byte count");
+        System.out.println("\t-w: Word count");
+        System.out.println("\t-m: Character count");
     }
 
     public static void fPrint(String file, int... n) {
-        System.out.print(sep);
+        System.out.print("  ");
         for (int i : n) {
-            System.out.print(i + sep);
+            System.out.print(i + "  ");
         }
         System.out.println(file);
     }
 
-    public static int getBytes() {
-        // return content.getBytes().length;
-        return c;
-    }
-
-    public static int getLines() {
-        // int lines = 0;
-        // for (int i = 0; i < content.length(); i++) {
-        // if (content.charAt(i) == '\n') {
-        // lines++;
-        // }
-        // }
-        // return lines;
-        return l;
-    }
-
-    public static int getWords() {
-        // if (content == null || content.trim().isEmpty()) {
-        // return 0;
-        // }
-        // return content.trim().split("\\s+").length;
-        return w;
-
-    }
 }
